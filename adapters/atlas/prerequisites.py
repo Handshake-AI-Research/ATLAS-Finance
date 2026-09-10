@@ -13,6 +13,8 @@ import sys
 import urllib.request
 from pathlib import Path
 
+import logging
+
 from adapters.atlas.config import (
     DEFAULT_DATA_DIR, DEFAULT_OUTPUT_DIR, GANDALF_REPO, GANDALF_VERSION, REPO_ROOT,
 )
@@ -76,6 +78,37 @@ CHECKS = [
     ("gandalf reachable", _gandalf_public), ("Downloaded packs", _data),
     ("Generated tasks", _tasks),
 ]
+
+
+def ensure_all(*, data_dir: Path | None = None) -> None:
+    """Run the checks that must pass before generating tasks, fixing what we can.
+
+    Mirrors the BankerToolBench adapter's contract: skip what is already done,
+    download what is missing, and raise with an actionable message otherwise.
+    """
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    for name, fn in (("Docker", _docker), ("Harbor", _harbor)):
+        good, detail = fn()
+        if not good:
+            msg = f"{name}: {detail}"
+            raise RuntimeError(msg)
+
+    if data_dir is not None and not sorted((data_dir / "env-packs").glob("*.zip")):
+        good, detail = _hf_token()
+        if not good:
+            msg = f"HuggingFace auth: {detail}"
+            raise RuntimeError(msg)
+        logging.getLogger("prerequisites").info("no packs yet -- downloading from HuggingFace")
+        subprocess.run(
+            [sys.executable, str(REPO_ROOT / "scripts" / "download_from_hf.py"),
+             "--data-dir", str(data_dir)],
+            check=True,
+        )
+
+    good, detail = _gandalf_public()
+    if not good:
+        msg = f"gandalf: {detail}"
+        raise RuntimeError(msg)
 
 
 def main() -> int:
