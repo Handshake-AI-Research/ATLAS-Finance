@@ -1,0 +1,1 @@
+"""ATLAS Finance Bench adapter."""

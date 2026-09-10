@@ -1,0 +1,7 @@
+atlas-data/
+datasets/
+jobs/
+.venv/
+__pycache__/
+*.pyc
+.env
