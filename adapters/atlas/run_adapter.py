@@ -51,7 +51,7 @@ def main() -> int:
     if args.env:
         wanted = {f"-env{n}__" for n in args.env}
         if index is not None:
-            env_ids = {t.task_id for t in index if t.env_number in set(args.env)}
+            env_ids = {t.task_slug for t in index if t.env_num in set(args.env)}
         else:
             env_ids = None
         only = (only or env_ids or set()) if (only or env_ids) else None
