@@ -95,7 +95,7 @@ def build(
     # Cross-check the index against what the packs actually hold. The packs win;
     # drift means tasks.jsonl is stale and should be regenerated.
     if index is not None and only is None:
-        in_index = {t.task_id for t in index}
+        in_index = {t.task_slug for t in index}
         in_packs = set(result.tasks)
         for missing in sorted(in_index - in_packs):
             result.index_drift.append(f"{missing}: in tasks.jsonl but no pack contains it")

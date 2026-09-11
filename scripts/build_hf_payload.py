@@ -68,14 +68,18 @@ def task_rows(pack: Path, hf_name: str) -> list[dict]:
 
             env_match = re.search(r"env(\d+)__", task_id)
             toml_data = tomllib.loads(toml_text)
+            # Field names and payload encoding match the PUBLISHED index, not
+            # this repo's internal preference: task_slug/env_num, and the two
+            # payload columns as JSON strings. Emitting the old shape produced
+            # rows that failed AtlasTask validation 100/100 against what shipped.
             rows.append({
-                "task_id": task_id,
-                "env_number": int(env_match.group(1)) if env_match else 0,
+                "task_slug": task_id,
+                "env_num": int(env_match.group(1)) if env_match else 0,
                 "scenario_id": (toml_data.get("metadata") or {}).get("scenario_id", ""),
                 "pack": hf_name,
                 "instruction": instruction,
-                "rubric_json": json.loads(rubric_text) if rubric_text else [],
-                "task_toml_json": toml_data,
+                "rubric_json": rubric_text or "{}",
+                "task_toml_json": json.dumps(toml_data),
             })
     return rows
 
@@ -103,14 +107,14 @@ def main() -> int:
         got = task_rows(dest, hf_name)
         rows.extend(got)
         digest = hashlib.sha256(dest.read_bytes()).hexdigest()
-        env_no = got[0]["env_number"] if got else 0
+        env_no = got[0]["env_num"] if got else 0
         table.append(
             f"| {env_no} | `{hf_name}` | {len(got)} | {dest.stat().st_size / 1e6:.0f} MB | `{digest[:16]}…` |"
         )
         log.info("%-46s %2d task(s)", hf_name, len(got))
 
     with (args.out / "tasks.jsonl").open("w") as fh:
-        for row in sorted(rows, key=lambda r: (r["env_number"], r["task_id"])):
+        for row in sorted(rows, key=lambda r: (r["env_num"], r["task_slug"])):
             fh.write(json.dumps(row) + "\n")
 
     total_mb = sum(p.stat().st_size for p in (args.out / "env-packs").glob("*.zip")) / 1e6
@@ -118,6 +122,15 @@ def main() -> int:
     (args.out / "README-table.md").write_text("\n".join(table) + "\n")
 
     log.info("\n%d task(s), %d pack(s) -> %s", len(rows), len(packs), args.out)
+    log.warning(
+        "\nThis tool derives rows from the PACKS only. The published index also "
+        "carries columns that exist nowhere in a pack -- the training canary and "
+        "the hand-curated taxonomy (world, project, primary_family, workflows, "
+        "sector_asset, situation). Publishing this file over the live index "
+        "DROPS them, canary included. To refresh a published index, join these "
+        "rows onto it on task_slug and replace only instruction / rubric_json / "
+        "task_toml_json."
+    )
     return 0
 
 

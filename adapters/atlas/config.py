@@ -12,7 +12,7 @@ DEFAULT_DATA_DIR = Path("atlas-data")      # what we pull down from HF
 DEFAULT_OUTPUT_DIR = Path("datasets/atlas")  # Harbor task dirs we generate
 
 # HuggingFace source.
-HF_REPO_ID = "handshake-ai-research/ATLAS_FINANCE"
+HF_REPO_ID = "handshake-ai-research/ATLAS-Finance"
 HF_REPO_TYPE = "dataset"
 HF_REVISION_ENV_VAR = "ATLAS_HF_REVISION"
 HF_DEFAULT_REVISION = "main"
