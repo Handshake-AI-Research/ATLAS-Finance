@@ -56,10 +56,3 @@ model uses `extra="allow"` to accept additional descriptive columns published
 alongside these (e.g. `world`, `project`, `sector_asset`, plus the nested
 `metadata` dict).
 
-## Regenerating the index
-
-`scripts/build_hf_payload.py` rebuilds rows from the packs. It does not include
-the training canary or the curated taxonomy, which are added at publish time.
-To refresh a published index, run the script and merge its output onto the
-existing index by `task_slug`, replacing only `instruction`, `rubric_json`, and
-`task_toml_json`.

@@ -119,10 +119,10 @@ def main() -> int:
     log.info("\n%d task(s), %d pack(s) -> %s", len(rows), len(packs), args.out)
     log.warning(
         "\nThis output contains only pack-derived columns. The published index "
-        "also carries a training canary and a curated taxonomy (world, project, "
-        "primary_family, workflows, sector_asset, situation) that this script "
-        "cannot regenerate. To refresh a published index, join these rows onto "
-        "the existing one by task_slug and replace only instruction, "
+        "also carries a leakage-detection canary and a curated taxonomy (world, "
+        "project, primary_family, workflows, sector_asset, situation) that this "
+        "script cannot regenerate. To refresh a published index, join these "
+        "rows onto the existing one by task_slug and replace only instruction, "
         "rubric_json, and task_toml_json."
     )
     return 0
