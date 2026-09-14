@@ -1,4 +1,4 @@
-job_name: atlas-finance-bench
+job_name: atlas-finance
 datasets:
   - path: datasets/atlas
     task_names: []          # empty = every task under the path
@@ -11,5 +11,3 @@ retry:
   max_retries: 2
 environment:
   type: docker
-artifacts:
-  - /home/agent/workspace
