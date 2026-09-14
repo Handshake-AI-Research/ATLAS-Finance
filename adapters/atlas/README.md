@@ -50,11 +50,11 @@ directions:
 | `rubric_json` | JSON string | parsed on load; callers see a dict |
 | `task_toml_json` | JSON string | parsed on load; callers see a dict |
 
-`rubric_json` and `task_toml_json` are stored as JSON strings so the HF dataset
-viewer renders them cleanly. `AtlasTask` parses them on load, so downstream
-code always sees dicts. The model uses `extra="allow"` to accept additional
-descriptive columns published alongside these (e.g. `world`, `project`,
-`sector_asset`).
+`rubric_json` and `task_toml_json` are stored as JSON strings in the dataset;
+`AtlasTask` parses them on load, so downstream code always sees dicts. The
+model uses `extra="allow"` to accept additional descriptive columns published
+alongside these (e.g. `world`, `project`, `sector_asset`, plus the nested
+`metadata` dict).
 
 ## Regenerating the index
 

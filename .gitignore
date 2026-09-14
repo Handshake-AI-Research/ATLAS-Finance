@@ -1,7 +1,9 @@
 atlas-data/
 datasets/
 jobs/
+trials/
 .venv/
 __pycache__/
 *.pyc
 .env
+.DS_Store

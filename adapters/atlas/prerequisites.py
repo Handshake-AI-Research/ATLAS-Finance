@@ -45,7 +45,7 @@ def _hf_token() -> tuple[bool, str]:
 
 
 def _gandalf_public() -> tuple[bool, str]:
-    """The verifier image clones gandalf with no credentials, so it must be public."""
+    """Verifier images clone gandalf anonymously, so the repo must be public."""
     url = f"{GANDALF_REPO}/releases/tag/{GANDALF_VERSION}"
     try:
         with urllib.request.urlopen(url, timeout=10) as r:
@@ -53,7 +53,7 @@ def _gandalf_public() -> tuple[bool, str]:
     except Exception as exc:  # noqa: BLE001
         return False, (
             f"cannot read {GANDALF_REPO}@{GANDALF_VERSION} anonymously ({exc}). "
-            "Every verifier image build will fail until this repo is publicly readable."
+            "Verifier image builds will fail until this repo is publicly readable."
         )
 
 
@@ -81,10 +81,10 @@ CHECKS = [
 
 
 def ensure_all(*, data_dir: Path | None = None) -> None:
-    """Run the checks that must pass before generating tasks, fixing what we can.
+    """Run the checks that must pass before generating tasks.
 
-    Mirrors the BankerToolBench adapter's contract: skip what is already done,
-    download what is missing, and raise with an actionable message otherwise.
+    Skips what is already done, downloads what is missing, and raises with an
+    actionable message otherwise.
     """
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     for name, fn in (("Docker", _docker), ("Harbor", _harbor)):

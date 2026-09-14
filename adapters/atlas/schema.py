@@ -1,11 +1,8 @@
 """Schema for a tasks.jsonl row.
 
-Each ATLAS env-pack already contains complete, Harbor-shaped task directories
-(task.toml, instruction.md, environment/, tests/). tasks.jsonl is therefore an
-INDEX over those packs -- it makes the corpus queryable without unzipping 826 MB
--- not the source of truth. Where the two disagree the pack wins, because the
-pack is what actually runs; the adapter reports the drift rather than papering
-over it.
+`tasks.jsonl` is an index over the env-packs: it lets you query the corpus
+without unzipping ~820 MB. The packs are the source of truth; when the two
+disagree, the pack wins and the adapter reports the drift.
 """
 
 from __future__ import annotations
@@ -20,36 +17,21 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class AtlasTask(BaseModel):
     """One row of tasks.jsonl.
 
-    Field names follow the PUBLISHED dataset, which is the contract: the index
-    on HuggingFace is written by the dataset owner and read here. An earlier cut
-    of this model invented its own names (`task_id` for the pack-relative
-    directory, `env_number`, `pack`) and typed the two payload columns as dicts.
-    None of that matched what shipped, so all 100 rows failed validation. The
-    published row is also richer than this model -- it carries the training
-    canary and a hand-curated taxonomy -- so this side moves, not the dataset.
-
-    `extra="allow"` is deliberate. The dataset owner adds descriptive columns
-    (world, project, sector_asset, ...) without coordinating a release here, and
-    a strict model would turn every such addition into a hard failure on a field
-    the adapter never reads.
+    Field names match the published HuggingFace dataset. `extra="allow"` lets
+    the dataset carry additional descriptive columns (e.g. world, project,
+    sector_asset) without requiring changes here.
     """
 
     model_config = ConfigDict(extra="allow")
 
-    # The pack-relative task directory: 'alderwick-env3__task_01'. This is the
-    # Harbor task identity and the join key against the zip members.
     task_slug: str = Field(description="Pack-relative task dir, e.g. alderwick-env3__task_01")
     env_num: int
-    # A display id, e.g. 'atlas-finance-alderwick-env3-task-01'. Deliberately NOT
-    # shape-validated: nothing here resolves anything by it, and pinning its
-    # format would break on a rename that does not affect the adapter.
     task_id: str = Field(default="", description="Display id; not used for resolution")
     scenario_id: str = Field(default="", description="Authoring scenario, e.g. alderwick_env3_v98")
     pack: str = Field(default="", description="Filename under env-packs/, when the index states it")
     instruction: str
-    # Both payload columns ship as JSON *strings* -- jsonl nests badly otherwise
-    # and the dataset viewer renders a string column cleanly. Parse on the way in
-    # so callers always see a dict.
+    # Stored as JSON strings in the dataset; parsed on the way in so callers
+    # see dicts.
     rubric_json: dict[str, Any] = Field(default_factory=dict)
     task_toml_json: dict[str, Any] = Field(default_factory=dict)
 

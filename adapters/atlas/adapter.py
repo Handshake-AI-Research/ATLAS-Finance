@@ -1,13 +1,9 @@
-"""Turn downloaded ATLAS env-packs into a Harbor dataset directory.
+"""Extract ATLAS env-packs into a Harbor dataset directory.
 
-There is no task template to render: every pack already holds finished Harbor
-task directories. The adapter extracts them into one tree that
-`harbor run -p datasets/atlas` consumes, then checks the result is actually
-runnable and agrees with tasks.jsonl.
-
-Pack FILENAMES are never parsed. Tasks are discovered from zip contents, so the
-dataset can rename packs (env01_ashcombe-partners.zip, or anything else)
-without touching this code.
+Each pack ships complete Harbor task directories, so this module unzips them
+into `datasets/atlas/`, verifies each task is runnable, and cross-checks the
+extracted set against tasks.jsonl. Task ids come from the top-level directory
+inside each zip, not from the zip filename, so packs can be renamed freely.
 """
 
 from __future__ import annotations
