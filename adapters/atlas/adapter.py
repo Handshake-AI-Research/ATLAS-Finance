@@ -1,13 +1,13 @@
 """Turn downloaded ATLAS env-packs into a Harbor dataset directory.
 
-Unlike BankerToolBench there is no task template to render: every pack already
-holds finished Harbor task directories. The adapter extracts them into one tree
-that `harbor run -p datasets/atlas` consumes, then checks the result is actually
+There is no task template to render: every pack already holds finished Harbor
+task directories. The adapter extracts them into one tree that
+`harbor run -p datasets/atlas` consumes, then checks the result is actually
 runnable and agrees with tasks.jsonl.
 
 Pack FILENAMES are never parsed. Tasks are discovered from zip contents, so the
-dataset can rename packs (env01_ashcombe-partners_platform.zip, or anything
-else) without touching this code.
+dataset can rename packs (env01_ashcombe-partners.zip, or anything else)
+without touching this code.
 """
 
 from __future__ import annotations

@@ -2,11 +2,10 @@
 
 Turns the published ATLAS Finance dataset into Harbor task directories.
 
-Unlike the BankerToolBench adapter, this one **assembles nothing**. Each ATLAS
-env-pack already contains complete, Harbor-shaped task directories — `task.toml`,
-`instruction.md`, `environment/`, `tests/` — so the adapter extracts them and
-verifies what it extracted. There is no `template/` here because there is
-nothing to fill in.
+This adapter **assembles nothing**. Each ATLAS env-pack already contains
+complete, Harbor-shaped task directories — `task.toml`, `instruction.md`,
+`environment/`, `tests/` — so the adapter extracts them and verifies what it
+extracted. There is no `template/` here because there is nothing to fill in.
 
 For full setup instructions see [README.md](../../README.md).
 
