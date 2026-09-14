@@ -20,8 +20,10 @@ HF_DEFAULT_REVISION = "main"
 TASKS_FILE = "tasks.jsonl"
 PACKS_DIR = "env-packs"
 
-# The verifier clones this repo anonymously at image-build time, so it must
-# stay publicly readable.
+# gandalf-finance is the LLM-judge framework used by every task's verifier.
+# Each task's Docker image clones it at build time with no credentials, so the
+# repo must stay publicly readable at this URL and tag or every verifier image
+# build will fail. `prerequisites.py` checks this before a run.
 GANDALF_REPO = "https://github.com/antoinepangas-hs/gandalf-finance"
 GANDALF_VERSION = "v1.1.0"
 
