@@ -80,9 +80,6 @@ It names what is missing and the command that fixes it. Re-run until clean.
 harbor run -c job-smoke.yaml --job-name "atlas-smoke-$(date +%s)"
 ```
 
-This proves Docker, the five MCP servers, `atlas-recalc` and the gandalf verifier
-all work end to end. Cheaper to find a broken image here than 100 tasks in.
-
 ### 4. Run the benchmark
 
 ```bash
