@@ -18,7 +18,7 @@ Scoring any agent output is done via [gandalf-finance](https://github.com/antoin
 
 <br>
 <p align="center">
-<img src="https://github.com/Handshake-AI-Research/assets/blob/main/atlas-finance/atlasfinance.jpg" width="900" alt="ATLAS Finance Overview">
+<img src="https://github.com/Handshake-AI-Research/assets/blob/main/atlas-finance/atlasfinanceoverview.png" width="900" alt="ATLAS Finance Overview">
 </p>
 
 
