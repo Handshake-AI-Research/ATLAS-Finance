@@ -50,7 +50,7 @@ def test_pass_rule() -> None:
 
 
 def test_gate_and_errored_policies() -> None:
-    gated = info([crit(10, True)], [{"section": "S", "failed_gate_indices": [0], "section_gate_met": None}])
+    gated = info([crit(10, True)], [{"section": "S", "failed_section_gate_indices": [0], "section_gate_met": None}])
     assert not pk.judge_pass(gated, min_weight=3, gate_policy="fail", errored_policy="fail")[0]
     assert pk.judge_pass(gated, min_weight=3, gate_policy="ignore", errored_policy="fail")[0]
     unevaluated = info([crit(10, None), crit(1, None)])
@@ -82,3 +82,41 @@ def test_aggregation_over_a_job_dir(tmp_path: Path) -> None:
     s = out["summary"]
     assert s["tasks"] == 2 and s["errored_trials"] == 1
     assert abs(s["pass@1"] - (2 / 3 + 0) / 2) < 1e-9 and s["pass@3"] == 1.0 and s["pass@3_tasks"] == 1
+
+
+def test_criterion_level_gate_indices_do_not_fail_the_section():
+    """`failed_gate_indices` indexes criteria flagged as gates inside a section,
+    not the section gate. Real gandalf output has it non-empty on 144 of 8,652
+    sections whose own gate passed; treating it as a section-gate failure makes
+    the pass rule silently stricter than documented."""
+    info = {
+        "criterion_results": [{"criterion": "c", "weight": 3.0, "met": True}],
+        "section_results": [{
+            "section": "Section 1",
+            "gate_count": 1,
+            "passed_gate_indices": [],
+            "failed_gate_indices": [15],          # a criterion-level gate
+            "section_gate_met": True,
+            "section_gates_met": True,
+            "passed_section_gate_indices": [0],
+            "failed_section_gate_indices": [],    # the section gate passed
+        }],
+    }
+    passed, reasons = pk.judge_pass(info, min_weight=3.0, gate_policy="fail", errored_policy="fail")
+    assert passed, reasons
+
+
+def test_failed_section_gate_still_fails():
+    info = {
+        "criterion_results": [{"criterion": "c", "weight": 3.0, "met": True}],
+        "section_results": [{
+            "section": "Section 2",
+            "failed_gate_indices": [],
+            "section_gate_met": False,
+            "section_gates_met": False,
+            "failed_section_gate_indices": [0],
+        }],
+    }
+    passed, reasons = pk.judge_pass(info, min_weight=3.0, gate_policy="fail", errored_policy="fail")
+    assert not passed
+    assert any("section gate failed" in r for r in reasons)

@@ -112,7 +112,11 @@ def judge_pass(info: dict, *, min_weight: float, gate_policy: str, errored_polic
             reasons.append(f"penalty triggered (w={weight:g}): {text}")
     if gate_policy == "fail":
         for s in info.get("section_results") or []:
-            failed = s.get("failed_gate_indices") or []
+            # `failed_gate_indices` indexes CRITERIA inside the section that are
+            # flagged as gates; it is not the section gate and is routinely
+            # non-empty on sections whose gate passed. The section gate lives in
+            # `failed_section_gate_indices` / `section_gate(s)_met`.
+            failed = s.get("failed_section_gate_indices") or []
             gate_met = s.get("section_gate_met")
             gates_met = s.get("section_gates_met")
             if failed or gate_met is False or gates_met is False:
