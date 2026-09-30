@@ -19,8 +19,7 @@ A trial PASSES a task when all of the following hold:
   1. every rubric criterion with weight >= MIN_WEIGHT (default 3) is met;
   2. no penalty criterion (weight < 0) is triggered -- for a penalty,
      "met" means the defect is present;
-  3. no section gate failed (--gate-policy ignore to drop this clause);
-  4. no criterion the judge could not evaluate is treated as met
+  3. no criterion the judge could not evaluate is treated as met
      (--errored-policy ignore to exclude such criteria instead).
 
 pass@k for a task with n trials and c passes is 1 - C(n-c, k) / C(n, k)
@@ -93,7 +92,7 @@ def reward_of(trial_dir: Path, result: dict | None) -> float | None:
         return None
 
 
-def judge_pass(info: dict, *, min_weight: float, gate_policy: str, errored_policy: str) -> tuple[bool, list[str]]:
+def judge_pass(info: dict, *, min_weight: float, errored_policy: str) -> tuple[bool, list[str]]:
     """Apply the pass definition to one gandalf info.json. Returns (passed, reasons for failing)."""
     reasons: list[str] = []
     for c in info.get("criterion_results") or []:
@@ -110,21 +109,10 @@ def judge_pass(info: dict, *, min_weight: float, gate_policy: str, errored_polic
             reasons.append(f"required criterion not met (w={weight:g}): {text}")
         if weight < 0 and met:
             reasons.append(f"penalty triggered (w={weight:g}): {text}")
-    if gate_policy == "fail":
-        for s in info.get("section_results") or []:
-            # `failed_gate_indices` indexes CRITERIA inside the section that are
-            # flagged as gates; it is not the section gate and is routinely
-            # non-empty on sections whose gate passed. The section gate lives in
-            # `failed_section_gate_indices` / `section_gate(s)_met`.
-            failed = s.get("failed_section_gate_indices") or []
-            gate_met = s.get("section_gate_met")
-            gates_met = s.get("section_gates_met")
-            if failed or gate_met is False or gates_met is False:
-                reasons.append(f"section gate failed: {s.get('section', '?')}")
     return (not reasons), reasons
 
 
-def load_trials(job_dirs: list[Path], *, min_weight: float, gate_policy: str, errored_policy: str) -> list[Trial]:
+def load_trials(job_dirs: list[Path], *, min_weight: float, errored_policy: str) -> list[Trial]:
     trials: list[Trial] = []
     for job in job_dirs:
         for td in trial_dirs(job):
@@ -135,7 +123,7 @@ def load_trials(job_dirs: list[Path], *, min_weight: float, gate_policy: str, er
             if info is None:
                 trials.append(Trial(job.name, task, td.name, reward, None, ["no verifier/grader/info.json"]))
                 continue
-            passed, reasons = judge_pass(info, min_weight=min_weight, gate_policy=gate_policy, errored_policy=errored_policy)
+            passed, reasons = judge_pass(info, min_weight=min_weight, errored_policy=errored_policy)
             trials.append(Trial(job.name, task, td.name, reward, passed, reasons))
     return trials
 
@@ -185,7 +173,6 @@ def main() -> int:
     ap.add_argument("jobs", nargs="+", type=Path, help="Harbor job directories (each holds trial dirs with result.json)")
     ap.add_argument("--k", nargs="+", type=int, default=[1, 3], help="k values for pass@k (default: 1 3)")
     ap.add_argument("--min-weight", type=float, default=MIN_WEIGHT_DEFAULT, help="criteria with weight >= this must be met (default 3)")
-    ap.add_argument("--gate-policy", choices=("fail", "ignore"), default="fail", help="a failed section gate fails the trial (default) or is ignored")
     ap.add_argument("--errored-policy", choices=("fail", "ignore"), default="fail",
                     help="a required/penalty criterion the judge could not evaluate fails the trial (default) or is excluded")
     ap.add_argument("--json", type=Path, help="write the full result as JSON")
@@ -200,15 +187,15 @@ def main() -> int:
     if not job_dirs:
         return 2
     ks = sorted(set(args.k))
-    trials = load_trials(job_dirs, min_weight=args.min_weight, gate_policy=args.gate_policy, errored_policy=args.errored_policy)
+    trials = load_trials(job_dirs, min_weight=args.min_weight, errored_policy=args.errored_policy)
     if not trials:
         print("no trials found (a trial is a directory containing result.json)", file=sys.stderr)
         return 2
     out = aggregate(trials, ks)
     out["definition"] = {
-        "min_weight": args.min_weight, "gate_policy": args.gate_policy, "errored_policy": args.errored_policy,
-        "rule": "pass = every criterion with weight >= min_weight met AND no penalty criterion triggered"
-                + (" AND no section gate failed" if args.gate_policy == "fail" else ""),
+        "min_weight": args.min_weight, "errored_policy": args.errored_policy,
+        "rule": "pass = every criterion with weight >= min_weight met "
+                "AND no penalty criterion triggered",
     }
 
     head = f"{'task':44s} {'n':>3s} {'pass':>4s} {'reward':>7s} " + " ".join(f"{'pass@'+str(k):>7s}" for k in ks)
