@@ -63,7 +63,9 @@ def evaluate(info, rubric, atlas_version, *, min_weight=None, errored_policy="fa
     if not isinstance(results, list) or not results:
         raise ValueError("nonempty rubric and criterion_results are required")
     identities = Counter(map(identity, results))
-    if rubric is not None and Counter(map(identity, rubric_items(rubric))) != identities:
+    if rubric is None:
+        raise ValueError("complete rubric is required")
+    if Counter(map(identity, rubric_items(rubric))) != identities:
         raise ValueError("criterion results do not match the complete rubric (text, section, weight)")
     unknown = []
     failed = []
@@ -101,13 +103,13 @@ def evaluate(info, rubric, atlas_version, *, min_weight=None, errored_policy="fa
     }
 
 
-def judge_pass(info, *, min_weight=None, errored_policy="fail", atlas_version="v1.0"):
-    """Return the pass decision and failure reasons using the shared rules."""
+def judge_pass(info, *, rubric=None, min_weight=None, errored_policy="fail", atlas_version="v1.0"):
+    """Return passed (None for incomplete evidence) and failure reasons."""
     try:
-        result = evaluate(info, None, atlas_version, min_weight=min_weight,
+        result = evaluate(info, rubric, atlas_version, min_weight=min_weight,
                           errored_policy=errored_policy)
     except (ValueError, KeyError, TypeError, AttributeError) as exc:
-        return False, [f"invalid grading evidence: {exc}"]
+        return None, [f"invalid grading evidence: {exc}"]
     reasons = []
     for field, label in (("failed_critical_indices", "required criterion not met"),
                          ("triggered_penalty_indices", "penalty triggered"),
@@ -117,4 +119,4 @@ def judge_pass(info, *, min_weight=None, errored_policy="fail", atlas_version="v
         for index in result[field]:
             criterion = info["criterion_results"][index]
             reasons.append(f"{label} (w={criterion['weight']:g}): {criterion['criterion'][:90]}")
-    return result["passed"] is True, reasons
+    return result["passed"], reasons

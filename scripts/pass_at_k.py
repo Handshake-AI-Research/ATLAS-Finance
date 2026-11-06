@@ -42,14 +42,14 @@ def task_name_of(trial_dir: Path, result: dict | None) -> str:
     if result:
         tid = result.get("task_id")
         path = tid.get("path") if isinstance(tid, dict) else tid
-        if isinstance(path, str) and path.strip("/"):
+        if isinstance(path, str) and path.strip("/") and Path(path).name not in ("task", "tasks"):
             return Path(path).name
-    prefix = trial_dir.name.split("__")
-    if len(prefix) >= 3:  # <env>__task_NN__<trial suffix>
-        return "__".join(prefix[:-1])
+    prefix, separator, _ = trial_dir.name.rpartition("__")
+    if separator and prefix not in ("task", "tasks"):
+        return prefix
     if result and isinstance(result.get("task_name"), str) and result["task_name"]:
         return result["task_name"]
-    return prefix[0]
+    return prefix if separator else trial_dir.name
 
 
 def reward_of(trial_dir: Path, result: dict | None, *, rewards: dict | None = None) -> float | None:
@@ -62,14 +62,31 @@ def reward_of(trial_dir: Path, result: dict | None, *, rewards: dict | None = No
         return None
 
 
+def _rubric_of(directory, result, config, cache):
+    """Load the retained rubric or the original task rubric."""
+    paths = [directory / "verifier/rubric.json"]
+    for task in (config.get("task"), result.get("task_id")):
+        path = task.get("path") if isinstance(task, dict) else task
+        if isinstance(path, str):
+            paths.append(Path(path) / "tests/rubric.json")
+    for path in paths:
+        if path not in cache:
+            cache[path] = _read_json(path)
+        if cache[path] is not None:
+            return cache[path]
+    return None
+
+
 def iter_trial_records(job_dirs: list[Path], *, min_weight: float | None = None,
                        errored_policy: str = "fail", atlas_version: str = "v1.0"):
     """Yield trial decisions and raw context; exclude context from exports."""
     version = "custom" if min_weight is not None else atlas_version
+    rubrics = {}
     for job in job_dirs:
         lock = _read_json(job / "lock.json") or {}
         for directory in trial_dirs(job):
             result = _read_json(directory / "result.json") or {}
+            config = result.get("config") or _read_json(directory / "config.json") or {}
             rewards = (_read_json(directory / "verifier/reward.json")
                        or (result.get("verifier_result") or {}).get("rewards") or {})
             sidecar = _read_json(directory / "verifier/pass_rate.json") or {}
@@ -80,7 +97,9 @@ def iter_trial_records(job_dirs: list[Path], *, min_weight: float | None = None,
                     f"differs from requested {atlas_version}; aggregate versions separately"
                 )
             if use_recorded and "pass_rate" in rewards:
-                valid = rewards.get("pass_rate_valid", 1)
+                if not sidecar:
+                    raise ValueError(f"{directory}: recorded pass_rate requires versioned pass_rate.json")
+                valid = rewards.get("pass_rate_valid")
                 if rewards["pass_rate"] not in (0, 1) or valid not in (0, 1):
                     raise ValueError(f"{directory}: pass_rate and pass_rate_valid must be 0 or 1")
                 passed = bool(rewards["pass_rate"]) if valid else None
@@ -92,7 +111,8 @@ def iter_trial_records(job_dirs: list[Path], *, min_weight: float | None = None,
                 if info is None:
                     passed, reasons = None, ["no verifier/grader/info.json"]
                 else:
-                    passed, reasons = judge_pass(info, min_weight=min_weight,
+                    rubric = _rubric_of(directory, result, config, rubrics)
+                    passed, reasons = judge_pass(info, rubric=rubric, min_weight=min_weight,
                                                 errored_policy=errored_policy, atlas_version=atlas_version)
             if sidecar and use_recorded:
                 if not sidecar.get("valid", False):
@@ -103,7 +123,7 @@ def iter_trial_records(job_dirs: list[Path], *, min_weight: float | None = None,
                           reward_of(directory, result, rewards=rewards), passed, reasons, version)
             yield trial, {"directory": directory, "result": result, "rewards": rewards,
                           "diagnostic": sidecar, "lock": lock,
-                          "config": result.get("config") or _read_json(directory / "config.json") or {}}
+                          "config": config}
 
 
 def load_trials(job_dirs: list[Path], *, min_weight: float | None = None,
