@@ -45,8 +45,8 @@ def test_pass_rule() -> None:
     # a triggered penalty fails (for a penalty, met == defect present)
     bad, why = pk.judge_pass(info([crit(10, True), crit(-2, True)]), min_weight=3, errored_policy="fail")
     assert not bad and "penalty triggered" in why[0]
-    # skipped criteria never count
-    assert pk.judge_pass(info([crit(10, None, skipped=True)]), min_weight=3, errored_policy="fail")[0]
+    # skipped critical criteria cannot certify a pass
+    assert not pk.judge_pass(info([crit(10, None, skipped=True)]), min_weight=3, errored_policy="fail")[0]
 
 
 def test_errored_policy() -> None:
