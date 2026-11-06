@@ -130,6 +130,15 @@ def test_partial_grading_cannot_certify_a_pass():
                          rubric=rubric, atlas_version="v1.1")[0] is True
 
 
+def test_uuid_directory_uses_saved_trial_name():
+    directory = Path("a8a05d5a-9716-4464-9303-52f840f74966")
+    for name in ("haldenbrooke-env11__task_08", "alderwick-env3__task_08"):
+        for path in ("/harbor/task", "/cache/downloaded-task"):
+            result = {"task_id": {"path": path}, "task_name": "handshake/task-08",
+                      "trial_name": name + "__rollout-id"}
+            assert pk.task_name_of(directory, result) == name
+
+
 def test_recorded_pass_requires_a_versioned_diagnostic(tmp_path):
     trial = make_trial(tmp_path, "env1-task-01", "env1-task-01__attempt", 1.0, None)
     (trial / "verifier/reward.json").write_text(

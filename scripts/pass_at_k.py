@@ -38,7 +38,12 @@ def trial_dirs(job_dir: Path) -> list[Path]:
 
 
 def task_name_of(trial_dir: Path, result: dict | None) -> str:
-    """Resolve a unique task directory name before using its packaged name."""
+    """Resolve task identity from the saved trial name before path fallbacks."""
+    name = (result or {}).get("trial_name")
+    if isinstance(name, str):
+        prefix, separator, _ = name.rpartition("__")
+        if separator and prefix not in ("task", "tasks"):
+            return prefix
     if result:
         tid = result.get("task_id")
         path = tid.get("path") if isinstance(tid, dict) else tid
