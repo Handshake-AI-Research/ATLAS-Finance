@@ -11,7 +11,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from pass_rules import RULES, judge_pass, rule_metadata
+from .pass_rules import RULES, judge_pass, rule_metadata
 
 
 @dataclass
