@@ -72,6 +72,10 @@ def evaluate(info, rubric, atlas_version, *, min_weight=None, errored_policy="fa
     unknown = []
     failed = []
     penalties = []
+    failed_gate_sections = {
+        section["section"] for section in info.get("section_results", [])
+        if section.get("gated_out") is True and section.get("section_gates_met") is False
+    }
     critical_count = penalty_count = 0
     for index, result in enumerate(results):
         required = compare(result["weight"], threshold)
@@ -79,6 +83,11 @@ def evaluate(info, rubric, atlas_version, *, min_weight=None, errored_policy="fa
         critical_count += required
         penalty_count += penalty
         if not (required or penalty):
+            continue
+        # Failed gates leave required criteria unmet and penalties inactive.
+        if result.get("skipped") is True and result.get("section") in failed_gate_sections:
+            if required:
+                failed.append(index)
             continue
         met = result.get("met")
         if type(met) is not bool or result.get("skipped", False):
