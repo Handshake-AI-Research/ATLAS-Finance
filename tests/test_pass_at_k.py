@@ -6,15 +6,11 @@ Run: uv run --with pytest pytest tests/test_pass_at_k.py
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
-
-import pass_at_k as pk  # noqa: E402
+from atlas_finance import pass_at_k as pk
 
 
 def crit(weight: float, met, *, skipped=False) -> dict:
