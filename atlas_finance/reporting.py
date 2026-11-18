@@ -88,9 +88,9 @@ def collect_attempts(jobs, atlas_version):
         github = provenance.get("github") or {}
         error = (result.get("exception_info") or {}).get("exception_type")
         rewards = context["rewards"]
-        refusal = rewards.get("refusal")
-        if refusal is None and error == "AgentSafetyRefusalError":
-            refusal = True
+        is_refusal = rewards.get("is_refusal")
+        if is_refusal is None and error == "AgentSafetyRefusalError":
+            is_refusal = 1
         lock = context["lock"]
         digest = None
         candidate_digests = set()
@@ -106,12 +106,12 @@ def collect_attempts(jobs, atlas_version):
         if digest is None and len(candidate_digests) == 1:
             digest = candidate_digests.pop()
         attempts.append({
-            "job": str(context["directory"].parent), "trial": trial.name, "task": trial.task,
+            "job": str(context["job"]), "trial": trial.name, "task": trial.task,
             "model": model, "provider": provider, "reasoning_effort": reasoning,
             "atlas_version": atlas_version, "benchmark_version": hf.get("benchmark_version"),
             "github_commit": github.get("commit"), "hf_revision": hf.get("revision"),
             "executed_task_digest": digest, "passed": trial.passed,
-            "reward": trial.reward, "refusal": refusal, "error_class": error,
+            "reward": trial.reward, "is_refusal": is_refusal, "error_class": error,
             **agent_usage(result),
         })
     return attempts
@@ -140,7 +140,7 @@ def summary_row(attempts):
     accuracy, margin = _accuracy_statistics(outcomes)
     pass_at_3_percent = 100 * sum(any(task) for task in outcomes) / len(tasks)
     seconds = _mean(attempts, "model_time_s")
-    refusal = _mean(attempts, "refusal")
+    refusal = _mean(attempts, "is_refusal")
     return {
         **{key: first.get(key) for key in SUMMARY_COLUMNS[:4]},
         "pass_rate_percent": 100 * accuracy,

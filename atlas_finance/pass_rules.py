@@ -9,6 +9,7 @@ RULES = {
     "v1.0": {"operator": ">=", "threshold": 3},
     "v1.1": {"operator": ">", "threshold": 5},
 }
+DEFAULT_VERSION = "v1.1"
 
 
 def critical(weight, atlas_version):
@@ -112,7 +113,7 @@ def evaluate(info, rubric, atlas_version, *, min_weight=None, errored_policy="fa
     }
 
 
-def judge_pass(info, *, rubric=None, min_weight=None, errored_policy="fail", atlas_version="v1.0"):
+def judge_pass(info, *, rubric=None, min_weight=None, errored_policy="fail", atlas_version=DEFAULT_VERSION):
     """Return passed (None for incomplete evidence) and failure reasons."""
     try:
         result = evaluate(info, rubric, atlas_version, min_weight=min_weight,
