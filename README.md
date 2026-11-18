@@ -41,7 +41,7 @@ uv tool install --upgrade 'harbor>=0.3.0'
 ### 1. Download data and initialize environments/tasks
 
 ```bash
-uv run python scripts/download_from_hf.py          # -> atlas-data/ (pinned v1.1.0 release, checksums verified)
+uv run python scripts/download_from_hf.py          # -> atlas-data/ (pinned v1.1.0 release)
 uv run python -m adapters.atlas.run_adapter        # -> datasets/atlas/
 ```
 
