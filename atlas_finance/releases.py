@@ -18,7 +18,7 @@ PACK_COUNT = 13
 
 RELEASES = {
     "v1.0.0": {"revision": "1be554dfcbaeb55a76ba40bb1d8468195ffd06d9", "scoring_version": "v1.0"},
-    "v1.1.0": {"revision": "d2ecda358b47d32c61058788485ed60aa82b8a30", "scoring_version": "v1.1"},
+    "v1.1.0": {"revision": "2adfdd89ce74ff62d84f4a7a293c9f104d82f07b", "scoring_version": "v1.1"},
 }
 LATEST = "v1.1.0"
 
